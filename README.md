@@ -8,24 +8,25 @@ Each agent is a deep-knowledge persona grounded in FDA guidance, ISO standards, 
 
 | Agent | Domain | Standards |
 |-------|--------|-----------|
-| [regulatory-reviewer](agents/regulatory-reviewer/SKILL.md) | FDA submission readiness | IEC 62304, ISO 14971, ISO 13485, IEC 62366-1, FDA PCCP |
-| [clinical-reviewer](agents/clinical-reviewer/SKILL.md) | Neonatal SpO2 clinical logic | Published literature (Bonafide et al., AAP guidelines) |
-| [qa-reviewer](agents/qa-reviewer/SKILL.md) | ISO 13485 QMS compliance | ISO 13485:2016, 21 CFR 820, ISO 19011 |
-| [safety-reviewer](agents/safety-reviewer/SKILL.md) | Patient safety & human factors | ISO 14971:2019, IEC 62366-1:2015+A1:2020 |
-| [cybersecurity-reviewer](agents/cybersecurity-reviewer/SKILL.md) | Medical device cybersecurity | FDA Premarket Cyber Guidance (2023), Section 524B, AAMI TIR57, IEC 81001-5-1 |
+| [regulatory-reviewer](regulatory-reviewer/SKILL.md) | FDA submission readiness | IEC 62304, ISO 14971, ISO 13485, IEC 62366-1, FDA PCCP |
+| [clinical-reviewer](clinical-reviewer/SKILL.md) | Neonatal SpO2 clinical logic | Published literature (Bonafide et al., AAP guidelines) |
+| [qa-reviewer](qa-reviewer/SKILL.md) | ISO 13485 QMS compliance | ISO 13485:2016, 21 CFR 820, ISO 19011 |
+| [safety-reviewer](safety-reviewer/SKILL.md) | Patient safety & human factors | ISO 14971:2019, IEC 62366-1:2015+A1:2020 |
+| [cybersecurity-reviewer](cybersecurity-reviewer/SKILL.md) | Medical device cybersecurity | FDA Premarket Cyber Guidance (2023), Section 524B, AAMI TIR57, IEC 81001-5-1 |
 
 ## Usage
 
 ### Install as Claude Code skills
 
-Copy or symlink the `agents/` directory into your project's `.claude/skills/agents/`:
+Add this repo as a submodule or copy the agent directories into your project's `.claude/skills/agents/`:
 
 ```bash
 # Option 1: Git submodule (recommended for shared repos)
 git submodule add https://github.com/mc-barnes/samd-agents.git .claude/skills/agents
 
 # Option 2: Direct copy
-cp -r agents/* .claude/skills/agents/
+cp -r regulatory-reviewer clinical-reviewer qa-reviewer safety-reviewer cybersecurity-reviewer \
+  your-project/.claude/skills/agents/
 ```
 
 ### Invoke in Claude Code
