@@ -8,11 +8,21 @@ Each agent is a deep-knowledge persona grounded in FDA guidance, ISO standards, 
 
 | Agent | Domain | Standards |
 |-------|--------|-----------|
-| [regulatory-reviewer](regulatory-reviewer/SKILL.md) | FDA submission readiness | IEC 62304, ISO 14971, ISO 13485, IEC 62366-1, FDA PCCP |
+| [regulatory-reviewer](regulatory-reviewer/SKILL.md) | FDA submission readiness | IEC 62304:2006+A1:2015, ISO 14971:2019, ISO 13485:2016, IEC 62366-1:2015+A1:2020, FDA PCCP |
 | [clinical-reviewer](clinical-reviewer/SKILL.md) | Neonatal SpO2 clinical logic | Published literature (Bonafide et al., AAP guidelines) |
 | [qa-reviewer](qa-reviewer/SKILL.md) | ISO 13485 QMS compliance | ISO 13485:2016, 21 CFR 820, ISO 19011 |
 | [safety-reviewer](safety-reviewer/SKILL.md) | Patient safety & human factors | ISO 14971:2019, IEC 62366-1:2015+A1:2020 |
-| [cybersecurity-reviewer](cybersecurity-reviewer/SKILL.md) | Medical device cybersecurity | FDA Premarket Cyber Guidance (2023), Section 524B, AAMI TIR57, IEC 81001-5-1 |
+| [cybersecurity-reviewer](cybersecurity-reviewer/SKILL.md) | Medical device cybersecurity | FDA Premarket Cyber Guidance (June 2025), Section 524B, AAMI TIR57, IEC 81001-5-1:2021 |
+
+### Scope boundaries
+
+Where agents share standards coverage, one agent owns the deep review and the other performs structural checks:
+
+| Standard | Canonical owner | Other agents |
+|----------|----------------|--------------|
+| ISO 14971:2019 (risk management) | **safety-reviewer** — clinical adequacy of risk judgments, AFAP rationale, cumulative risk | regulatory-reviewer — structural presence check; cybersecurity-reviewer — security risk integration with 14971 |
+| IEC 62366-1:2015+A1:2020 (usability) | **safety-reviewer** — use-related risk, foreseeable misuse, human factors | regulatory-reviewer — checks usability records exist in traceability |
+| ISO 13485:2016 (QMS) | **qa-reviewer** — CAPA, document control, audit readiness | regulatory-reviewer — checks QMS artifacts referenced in submission |
 
 ## Usage
 
