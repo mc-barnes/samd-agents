@@ -2,9 +2,54 @@
 
 Specialist agents for Claude Code, built for Software as a Medical Device (SaMD) teams.
 
-Two categories of agents live here: **regulatory reviewers** grounded in FDA guidance and ISO standards, and **VoC (Voice-of-Customer) synthesizers** that turn raw qualitative feedback into defensible, prioritized insight backlogs.
+Two categories: **regulatory reviewers** (5) grounded in FDA guidance and ISO standards, and **VoC synthesizers** (3) that turn raw qualitative feedback into defensible, prioritized insight backlogs.
 
 > **Jurisdiction (reviewers):** FDA only. EU MDR support planned for a future release.
+
+## Quick start
+
+### Install
+
+Add this repo as a submodule or copy agent directories into your project's `.claude/skills/agents/`:
+
+```bash
+# Option 1: Git submodule (recommended)
+git submodule add https://github.com/mc-barnes/samd-agents.git .claude/skills/agents
+
+# Option 2: Direct copy (reviewers only)
+cp -r regulatory-reviewer clinical-reviewer qa-reviewer safety-reviewer cybersecurity-reviewer \
+  your-project/.claude/skills/agents/
+
+# Option 3: Direct copy (VoC agents only)
+cp -r theme-extractor severity-scorer bias-auditor \
+  your-project/.claude/skills/agents/
+```
+
+### Use
+
+**Reviewers** — point a reviewer at any SaMD artifact:
+
+```
+"Run a regulatory review on this PRD"
+"Do a safety review of this risk analysis"
+"Cybersecurity review of our threat model"
+```
+
+**VoC agents** — run individually or as a panel:
+
+```
+"Extract themes from the inputs"
+"Score themes"
+"Run voc panel"                        ← runs all three sequentially
+```
+
+### Example output
+
+See [`examples/`](examples/) for sample outputs:
+- [Regulatory review output](examples/reviewer-output.md) — regulatory-reviewer on a neonatal SpO2 PRD
+- [VoC panel output](examples/voc-panel-output.md) — theme extraction → severity scoring → bias audit
+
+---
 
 ## Regulatory Reviewers
 
@@ -20,15 +65,50 @@ Each reviewer is a deep-knowledge persona grounded in real submission experience
 
 > **Note:** The clinical-reviewer is specifically a neonatal pulse oximetry expert (SpO2 thresholds, alarm fatigue, SatSeconds, Owlet validation studies). It does not cover general clinical domains.
 
+### Panel review
+
+Run multiple reviewers against the same artifact:
+
+- "Run safety-reviewer and regulatory-reviewer on this risk analysis"
+- "Review this submission package with regulatory-reviewer and cybersecurity-reviewer"
+
+### Reviewer output format
+
+| Agent | Verdict levels | Finding sections |
+|-------|---------------|-----------------|
+| regulatory-reviewer | ACCEPTABLE / NEEDS REVISION / NOT SUBMITTABLE | BLOCKERS, WARNINGS, SUGGESTIONS |
+| clinical-reviewer | ACCEPTABLE / NEEDS REVISION / CLINICALLY UNSAFE | Clinical Concerns, Threshold & Accuracy Issues, Handoff Assessment, Recommendations |
+| qa-reviewer | AUDIT-READY / NEEDS REMEDIATION / NOT AUDIT-READY | FINDINGS, OBSERVATIONS, NOTES |
+| safety-reviewer | ACCEPTABLE / NEEDS REVISION / SAFETY CONCERN | SAFETY FINDINGS, GAPS, RECOMMENDATIONS |
+| cybersecurity-reviewer | ACCEPTABLE / NEEDS REVISION / SECURITY CONCERN | SECURITY FINDINGS, GAPS, RECOMMENDATIONS |
+
+All findings cite specific standard clauses or FDA guidance sections.
+
+---
+
 ## VoC Synthesizer Agents
 
-Three specialist agents that process raw qualitative feedback (patient calls, physician calls, TikTok, Instagram, patient advocacy blogs) into a prioritized insight backlog. They run sequentially as a panel: extract → score → audit.
+Three specialist agents that process raw qualitative feedback into a prioritized insight backlog. They run sequentially as a panel: extract → score → audit.
 
 | Agent | Version | Domain | Triggers |
 |-------|---------|--------|----------|
 | [theme-extractor](theme-extractor/SKILL.md) | 2.0.0 | Qualitative thematic analysis (Braun & Clarke) | "extract themes", "run theme extraction", "process inputs" |
 | [severity-scorer](severity-scorer/SKILL.md) | 2.0.0 | Prioritization (Kano classification + RICE scoring) | "score themes", "run severity scoring", "prioritize themes" |
 | [bias-auditor](bias-auditor/SKILL.md) | 2.0.0 | Research methodology / bias detection (8 checks) | "audit bias", "run bias audit", "check for bias" |
+
+### Prerequisites
+
+VoC agents expect your project to have this directory structure:
+
+```
+your-project/
+├── inputs/          ← Raw feedback docs (markdown with YAML frontmatter)
+├── themes/          ← Theme registry (_registry.yaml) + individual theme docs (THM-*.md)
+├── audits/          ← Bias audit reports (written by bias-auditor)
+└── .claude/skills/agents/   ← This repo
+```
+
+Each input requires YAML frontmatter with at minimum: `type: input`, `channel`, `persona`, `date`. See the [VoC Synthesizer](https://github.com/mc-barnes/samd-os) companion project for a complete working setup with input templates and example data.
 
 ### VoC pipeline
 
@@ -44,7 +124,27 @@ Three specialist agents that process raw qualitative feedback (patient calls, ph
 
 Trigger the full panel with: "run voc panel" or "synthesize feedback"
 
-### VoC bias checks
+### VoC output format
+
+| Agent | Output | Key sections |
+|-------|--------|-------------|
+| theme-extractor | Theme Extraction Report | New themes, updated themes, merge proposals, quotes captured, processing summary |
+| severity-scorer | Severity Scoring Report | Kano classification table, RICE prioritization table, scoring notes, confidence warnings |
+| bias-auditor | Bias Audit Report (verdict: CLEAN / BIAS FLAGS RAISED) | Numbered findings (BA-nnn), systemic patterns, "What Looks Sound", sample composition table |
+
+### Channel tiers
+
+Input channels are organized into tiers that affect reach estimation, confidence scoring, and signal quality:
+
+| Tier | Channels | Characteristics |
+|------|----------|----------------|
+| **Structured** | patient-call, physician-call, sales-call | Full attribution, rich context, low volume |
+| **Semi-structured** | nps, ticket, interview | Some attribution, moderate context |
+| **Unstructured** | tiktok, instagram, patient-advocacy-blog | Public, anonymous, high volume, weak attribution |
+
+Cross-channel corroboration (signal appearing in 2+ tiers) boosts confidence by +10-15%.
+
+### Bias checks
 
 The bias-auditor runs 8 checks across two categories:
 
@@ -60,41 +160,13 @@ The bias-auditor runs 8 checks across two categories:
 - Channel skew (>70% from a single channel)
 - Persona imbalance (any persona >3x overrepresented)
 
-### VoC channel tiers
+---
 
-The system organizes input channels into tiers that affect reach estimation, confidence scoring, and signal quality assessment:
-
-| Tier | Channels | Characteristics |
-|------|----------|----------------|
-| **Structured** | patient-call, physician-call, sales-call | Full attribution, rich context, low volume |
-| **Semi-structured** | nps, ticket, interview | Some attribution, moderate context |
-| **Unstructured** | tiktok, instagram, patient-advocacy-blog | Public, anonymous, high volume, weak attribution |
-
-Cross-channel corroboration (signal appearing in 2+ tiers) boosts confidence by +10-15%.
-
-### Reviewer scope boundaries
-
-Where reviewers share standards coverage, one owns the deep review and the other performs structural checks:
-
-| Standard | Canonical owner | Other agents |
-|----------|----------------|--------------|
-| ISO 14971:2019 (risk management) | **safety-reviewer** — clinical adequacy of risk judgments, AFAP rationale, cumulative risk | regulatory-reviewer — structural presence check; cybersecurity-reviewer — security risk integration with 14971 |
-| IEC 62366-1:2015+A1:2020 (usability) | **safety-reviewer** — use-related risk, foreseeable misuse, human factors | regulatory-reviewer — checks usability records exist in traceability |
-| ISO 13485:2016 (QMS) | **qa-reviewer** — CAPA, document control, audit readiness | regulatory-reviewer — checks QMS artifacts referenced in submission |
-
-### VoC agent scope boundaries
-
-Each VoC agent owns a distinct phase. No overlap.
-
-| Phase | Owner | Reads | Writes |
-|-------|-------|-------|--------|
-| Theme identification & deduplication | **theme-extractor** | `inputs/`, `themes/_registry.yaml` | `themes/_registry.yaml`, `themes/THM-*.md`, input frontmatter |
-| Kano classification + RICE scoring | **severity-scorer** | `themes/_registry.yaml`, `themes/THM-*.md` | `themes/_registry.yaml` (scores), `themes/THM-*.md` (score sections) |
-| Bias detection & sample analysis | **bias-auditor** | `themes/_registry.yaml`, `inputs/` frontmatter | Read-only. Outputs to `audits/` |
+## Reference
 
 ### Artifact routing
 
-Use this table to decide which agent to send a document to:
+Use this table to decide which agent to send a document to.
 
 **Regulatory artifacts:**
 
@@ -126,75 +198,25 @@ Use this table to decide which agent to send a document to:
 | Populated theme registry | severity-scorer | After extraction |
 | Scored themes | bias-auditor | After scoring |
 
-## Usage
+### Scope boundaries
 
-### Install as Claude Code skills
+**Reviewers** — where reviewers share standards coverage, one owns the deep review and the other performs structural checks:
 
-Add this repo as a submodule or copy the agent directories into your project's `.claude/skills/agents/`:
+| Standard | Canonical owner | Other agents |
+|----------|----------------|--------------|
+| ISO 14971:2019 (risk management) | **safety-reviewer** — clinical adequacy of risk judgments, AFAP rationale, cumulative risk | regulatory-reviewer — structural presence check; cybersecurity-reviewer — security risk integration with 14971 |
+| IEC 62366-1:2015+A1:2020 (usability) | **safety-reviewer** — use-related risk, foreseeable misuse, human factors | regulatory-reviewer — checks usability records exist in traceability |
+| ISO 13485:2016 (QMS) | **qa-reviewer** — CAPA, document control, audit readiness | regulatory-reviewer — checks QMS artifacts referenced in submission |
 
-```bash
-# Option 1: Git submodule (recommended for shared repos)
-git submodule add https://github.com/mc-barnes/samd-agents.git .claude/skills/agents
+**VoC agents** — each agent owns a distinct phase, no overlap:
 
-# Option 2: Direct copy (reviewers only)
-cp -r regulatory-reviewer clinical-reviewer qa-reviewer safety-reviewer cybersecurity-reviewer \
-  your-project/.claude/skills/agents/
+| Phase | Owner | Reads | Writes |
+|-------|-------|-------|--------|
+| Theme identification & deduplication | **theme-extractor** | `inputs/`, `themes/_registry.yaml` | `themes/_registry.yaml`, `themes/THM-*.md`, input frontmatter |
+| Kano classification + RICE scoring | **severity-scorer** | `themes/_registry.yaml`, `themes/THM-*.md` | `themes/_registry.yaml` (scores), `themes/THM-*.md` (score sections) |
+| Bias detection & sample analysis | **bias-auditor** | `themes/_registry.yaml`, `inputs/` frontmatter | Read-only. Outputs to `audits/` |
 
-# Option 3: Direct copy (VoC agents only)
-cp -r theme-extractor severity-scorer bias-auditor \
-  your-project/.claude/skills/agents/
-```
-
-### Invoke in Claude Code
-
-**Reviewers** — ask Claude to use a specific reviewer persona:
-
-- "Run a regulatory review on this PRD"
-- "Do a safety review of this risk analysis"
-- "Review this CAPA as the QA reviewer"
-- "Cybersecurity review of our threat model"
-- "Clinical review of the SpO2 triage logic"
-
-**VoC agents** — trigger individually or as a panel:
-
-- "Extract themes from the inputs" — runs theme-extractor
-- "Score themes" — runs severity-scorer
-- "Audit bias" — runs bias-auditor
-- "Run voc panel" or "Synthesize feedback" — runs all three sequentially
-
-### Panel review
-
-**Regulatory panel:** Run multiple reviewers against the same artifact:
-
-- "Run safety-reviewer and regulatory-reviewer on this risk analysis"
-- "Review this submission package with regulatory-reviewer and cybersecurity-reviewer"
-
-**VoC panel:** Run the full synthesis pipeline:
-
-- "Run voc panel" — theme extraction → severity scoring → bias audit
-- Produces a theme registry, scored theme docs, and a bias audit report
-
-## Output format
-
-### Reviewers
-
-| Agent | Verdict levels | Finding sections |
-|-------|---------------|-----------------|
-| regulatory-reviewer | ACCEPTABLE / NEEDS REVISION / NOT SUBMITTABLE | BLOCKERS, WARNINGS, SUGGESTIONS |
-| clinical-reviewer | ACCEPTABLE / NEEDS REVISION / CLINICALLY UNSAFE | Clinical Concerns, Threshold & Accuracy Issues, Handoff Assessment, Recommendations |
-| qa-reviewer | AUDIT-READY / NEEDS REMEDIATION / NOT AUDIT-READY | FINDINGS, OBSERVATIONS, NOTES |
-| safety-reviewer | ACCEPTABLE / NEEDS REVISION / SAFETY CONCERN | SAFETY FINDINGS, GAPS, RECOMMENDATIONS |
-| cybersecurity-reviewer | ACCEPTABLE / NEEDS REVISION / SECURITY CONCERN | SECURITY FINDINGS, GAPS, RECOMMENDATIONS |
-
-All reviewer findings cite specific standard clauses or FDA guidance sections.
-
-### VoC Agents
-
-| Agent | Output | Key sections |
-|-------|--------|-------------|
-| theme-extractor | Theme Extraction Report | New themes, updated themes, merge proposals, quotes captured, processing summary |
-| severity-scorer | Severity Scoring Report | Kano classification table, RICE prioritization table, scoring notes, confidence warnings |
-| bias-auditor | Bias Audit Report (verdict: CLEAN / BIAS FLAGS RAISED) | Numbered findings (BA-nnn), systemic patterns, "What Looks Sound", sample composition table |
+---
 
 All output includes a disclaimer that results are AI-generated and require human validation.
 
