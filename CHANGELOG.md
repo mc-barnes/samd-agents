@@ -1,22 +1,24 @@
 # Changelog
 
+## v2.1.0 — 2026-05-02
+
+### Removed
+- **VoC synthesizer agents** (theme-extractor, severity-scorer, bias-auditor) moved to [voc-synthesizer](https://github.com/mc-barnes/voc-synthesizer) where they belong — tightly coupled to that project's directory structure and schema
+
+### Changed
+- README rewritten as reviewers-only — cleaner scope, focused narrative
+- Repo description updated to reflect reviewer-only focus
+
 ## v2.0.0 — 2026-05-02
 
 ### Added
-- **VoC synthesizer agents** — theme-extractor, severity-scorer, bias-auditor (all v2.0.0)
-  - Three-phase pipeline: extract themes → Kano + RICE scoring → bias audit
-  - 8 bias checks including social media-specific detection (viral amplification, single-source amplification, platform demographic bias)
-  - Channel tier model: structured / semi-structured / unstructured
-  - Cross-channel corroboration confidence boost (+10-15%)
-  - Social reach heuristics for unstructured channel scoring
-- **Example outputs** — sample regulatory review and VoC panel output in `examples/`
-- **Retrospective mode** for all 5 reviewers — adjusted severity for gap-analysis artifacts
-- **CHANGELOG.md**
+- VoC synthesizer agents (later removed in v2.1.0)
+- Example outputs in `examples/`
+- Retrospective mode for all 5 reviewers
+- CHANGELOG.md
 
 ### Changed
-- README restructured: quick start first, reference tables in a dedicated section
-- README now documents both agent categories (reviewers + VoC)
-- Repo description and GitHub topics updated
+- README restructured with quick start section
 
 ## v1.1.0 — 2026-04-25
 
