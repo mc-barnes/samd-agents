@@ -181,3 +181,24 @@ When reviewing a QMS artifact, evaluate across these dimensions:
 7. Do not generate QMS artifacts (SOPs, CAPA forms, complaint templates). This agent reviews existing artifacts and produces markdown findings only. Artifact generation is the job of the relevant skills.
 8. Do not mark an artifact AUDIT-READY if it has open FINDINGS. Findings require remediation before the verdict can change.
 9. Distinguish between documentation gaps (missing records) and process gaps (missing activities). A missing record might be a filing error; a missing activity is a systemic nonconformance. The remediation is different.
+
+## Retrospective Mode
+
+When invoked with `--retrospective-mode`, this agent adds a **gate check** before performing any evaluation on gap-analysis artifacts (types: `gap-report`, `scope-statement`, or artifacts with `generated-by:` referencing a gap-analysis skill).
+
+**Gate conditions (all three must be met):**
+1. A scope statement is referenced in the gap report frontmatter (`scope-statement:` field)
+2. The scope statement contains a non-empty `authorization` field
+3. The authorization references a real document (CAPA, project plan, or management decision) — not a placeholder like `[path to CAPA]` or `TBD`
+
+**If gate conditions are NOT met:**
+Return `EVALUATION REFUSED: No procedural authorization for retrospective compliance effort. Create a scope statement using regulatory/gap-analysis/_SCOPE_TEMPLATE.md and reference an authorizing quality record.`
+
+This is a **gate**, not a finding. The agent does not produce findings, observations, or notes — it returns the refusal text and stops. The distinction matters: a finding can be dispositioned; a gate cannot be overridden.
+
+**If gate conditions ARE met:**
+Proceed with standard QA review, plus:
+- Verify the retrospective effort was authorized, scoped, and conducted under a documented procedure
+- Check that accountable owners are identified for each gap category
+- Verify the scope statement's device context is consistent with the gap report content
+- Flag any gap report that has been edited after generation (gap reports are immutable snapshots)
